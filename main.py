@@ -13,12 +13,12 @@ class TestState:
     def __init__(self) -> None:
         self.current_index =0
         self.user_inputs = {}
-        self.result_text = ""
+        self.results = []
         
     def reset_for_next(self):
         self.current_index += 1
         self.user_inputs = {}
-        self.result_text = ""
+        self.results = []
         
         
 def get_test_state() -> TestState:
@@ -54,8 +54,10 @@ def test_view():
     ui.button("Проверить", on_click=lambda: check_answers(state))
     ui.button("Следующий ролл", on_click=next_roll)
     
-    if state.result_text:
-        ui.label(state.result_text).classes("text-lg")
+    if state.results:
+        for text, is_correct in state.results:
+            color = "text-green-600" if is_correct else "text-red-600"
+            ui.label(text).classes(f"text-lg {color}")
     
 
 @ui.page('/')
@@ -69,27 +71,32 @@ def check_answers(state: TestState):
     roll_name = roll_names[state.current_index]
     roll = rolls[roll_name]
     
-    results = []
+    state.results = []
     
     for item in roll['filling']:
         user_value = state.user_inputs.get(item["name"], "").strip()
         correct_value = str(item["grams"])
+        is_correct = user_value == correct_value
         
-        if user_value == correct_value:
-            results.append(f"{item['name']}: верно!")
+        if is_correct:
+            text = f"{item['name']}: верно!"
         else:
-            results.append(f"{item['name']}: ошибка (вы ввели {user_value}, правильно {correct_value})")
+            text = f"{item['name']}: ошибка (вы ввели {user_value}, правильно {correct_value})"
+        state.results.append((text, is_correct))
     if roll['decoration']:    
         for item in roll['decoration']:
             user_value = state.user_inputs.get(item["name"], "").strip()
             correct_value = str(item["grams"])
+            is_correct = user_value == correct_value
             
-            if user_value == correct_value:
-                results.append(f"{item['name']}: верно!")
+            if is_correct:
+                text = f"{item['name']}: верно!"
             else:
-                results.append(f"{item['name']}: ошибка (вы ввели {user_value}, правильно {correct_value})")
+                text = f"{item['name']}: ошибка (вы ввели {user_value}, правильно {correct_value})"
+                
+            state.results.append((text, is_correct))
             
-    state.result_text = "\n".join(results)
+    # state.results = "\n".join(results)
     test_view.refresh()
 
 
@@ -100,19 +107,3 @@ def next_roll():
     
     
 ui.run(port=8082, storage_secret="secret_string")
-
-# ui.label("Тестирование роллов").classes("text-2x1 font-bold text-center w-full")
-
-# for name, roll in rolls.items():
-#     with ui.expansion(name).classes("w-full border rounded-lg mb-2"):
-#         ui.label(f"Тип: {roll["type"]}").classes("font-bold")
-#         ui.label("Начинка:")
-#         for item in roll["filling"]:
-#             ui.label(f"  {item["name"]} - {item["grams"]} гр.")
-#         if roll["decoration"]:
-#             ui.label(f"Украшение:").classes("font-bold")
-#             for item in roll["decoration"]:
-#                 ui.label(f"  {item["name"]} - {item["grams"]} гр.")
-                    
-            
-# ui.run()
